@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Сон имеет значение</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600&family=Outfit:wght@200;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--fg:#000;--card:#121214;--cardfg:#f2f2f4;--mute:#8a8a92;--off:#2a2a2e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0a0b;--fg:#fff}}
+:root[data-theme="dark"]{--bg:#0a0a0b;--fg:#fff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Outfit,system-ui,sans-serif}
+main{max-width:420px;margin:0 auto;padding:22px 14px 24px}
+h1{font:600 30px/1.1 Oswald,Impact,sans-serif;text-align:center;margin:0 0 18px}
+.card{background:var(--card);color:var(--cardfg);border-radius:22px;padding:16px 14px 18px}
+.head{display:flex;align-items:center;gap:12px}
+.brain{position:relative;width:58px;flex:none;display:grid;place-items:center}
+.brain svg{width:100%;height:auto;color:#fff}
+.brain b{position:absolute;font:500 15px Outfit,sans-serif;color:#fff;background:var(--card);padding:0 4px;border-radius:8px}
+.ttl{flex:1}
+.year{font:200 32px/1 Outfit,sans-serif;letter-spacing:.02em;display:block}
+.count{font-size:13px;color:var(--mute)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 10px;margin:14px 0;font-size:11px;color:var(--mute)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.grid{display:grid;grid-template-columns:30px repeat(7,22px);gap:6px;justify-content:center}
+.wd,.ml{font-size:10px;color:var(--mute);display:flex;align-items:center;justify-content:center}
+.ml{justify-content:flex-start}
+.d{width:22px;height:22px;border-radius:50%;background:var(--off);border:0;padding:0;cursor:pointer;font:400 10px/22px Outfit,sans-serif;color:#7c7c85;text-align:center}
+.d.c0,.d.c6,.d.c7,.d.c8,.d.c9{color:transparent}
+.d.sel{outline:2px solid #fff;outline-offset:2px;transform:scale(1.1)}
+.d.f{opacity:.4;cursor:default}
+.c0{background:#ef3b36}.c6{background:#1f6b4a}.c7{background:#2fbf6c}.c8{background:#8ff7c4}.c9{background:#ff9f43}
+.log{position:sticky;bottom:0;background:var(--card);color:var(--cardfg);padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0;max-width:420px;margin:0 auto;box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+.st{font-size:14px;margin:0 0 10px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:0;border-radius:10px;padding:10px 0;flex:1;min-width:48px;font:500 14px Outfit,sans-serif;color:#000;cursor:pointer}
+.btn.x{background:var(--off);color:var(--cardfg)}
+.btn:focus-visible,.d:focus-visible{outline:2px solid #8ff7c4;outline-offset:2px}
+.note{font-size:12px;color:var(--mute);text-align:center;margin:14px 0 0}
+.note button{background:none;border:0;color:var(--mute);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+</style>
+</head>
+<body>
+<main>
+<h1>Сон имеет значение</h1>
+<div id="app"></div>
+<p class="note">Цикл на 365 ночей: с 4 октября 2026 по 3 октября 2027. Число в мозге — оценка по среднему сну. Дата берётся из интернета, а не с часов телефона. Данные хранятся в приложении. <br><button id="exp">Скопировать копию</button> · <button id="imp">Восстановить из копии</button> · <button id="reset">Очистить</button></p>
+</main>
+<section class="log">
+<p class="st" id="st"></p>
+<div class="ctl">
+<button class="btn c0" data-h="5">&lt;6</button>
+<button class="btn c6" data-h="6" style="color:#fff">6 ч</button>
+<button class="btn c7" data-h="7">7 ч</button>
+<button class="btn c8" data-h="8">8 ч</button>
+<button class="btn c9" data-h="9">9+</button>
+<button class="btn x" id="del">Стереть</button>
+</div>
+</section>
+<script>
+const KEY='sleep-v3',MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pad=n=>String(n).padStart(2,'0'),fmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const S=new Date(2026,9,4),E=new Date(2027,9,3),SK=fmt(S),EK=fmt(E);let TK='',net='load';
+let data={},sel=SK;
+try{data=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){data={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+const cls=h=>h<6?'c0':h<7?'c6':h<8?'c7':h<9?'c8':'c9';
+const lbl=h=>h<6?'меньше 6 ч':h>=9?'9+ ч':h+' ч';
+const BRAIN='<svg viewBox="0 0 100 90" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M50 4C38 0 24 6 20 18 8 20 2 34 8 44 4 56 12 68 24 70c4 12 18 18 26 14 8 4 22-2 26-14 12-2 20-14 16-26 6-10 0-24-12-26C76 6 62 0 50 4Z"/><path d="M50 4v80M50 24c-8 0-14 4-16 10M50 46c-10 0-18 4-20 12M50 24c8 0 14 4 16 10M50 46c10 0 18 4 20 12"/></svg>';
+function build(){
+ const off=(S.getDay()+6)%7;let n=0,sum=0,dots='',ml='',pm=-1;
+ for(let i=0;i<365;i++){const dt=new Date(2026,9,4+i),k=fmt(dt),h=data[k],r=Math.floor((i+off)/7)+2,c=(i+off)%7+2,fut=k>TK;
+  if(h!=null){n++;sum+=h}
+  if(dt.getMonth()!==pm&&(dt.getDate()<=7||i===0)){pm=dt.getMonth();ml+=`<span class="ml" style="grid-column:1;grid-row:${r}">${MON[pm]}</span>`}
+  dots+=`<button class="d ${h!=null?cls(h):''} ${fut?'f':''} ${k===sel?'sel':''}" style="grid-column:${c};grid-row:${r}" data-k="${k}" aria-label="${k}">${dt.getDate()}</button>`}
+ const score=n?Math.round(90+Math.max(0,Math.min(1,(sum/n-5)/3))*60):'—';
+ const wd=['M','T','W','T','F','S','S'].map((x,j)=>`<span class="wd" style="grid-column:${j+2};grid-row:1">${x}</span>`).join('');
+ return `<div class="card"><div class="head"><div class="brain">${BRAIN}<b>${score}</b></div><div class="ttl"><span class="year">2026–2027</span><span class="count">${n} nights</span></div></div><div class="legend">Hours slept <span><i class="c0"></i>&lt; 6 h</span><span><i class="c6"></i>6 h</span><span><i class="c7"></i>7 h</span><span><i class="c8"></i>8 h</span><span><i class="c9"></i>9 h+</span></div><div class="grid">${wd}${ml}${dots}</div></div>`}
+function status(m){const h=data[sel];document.getElementById('st').textContent=(net==='load'?'Проверяю дату по интернету… ':net==='fail'?'Нет интернета, запись выключена. ':'')+(m?m+' ':'')+sel+' — '+(h!=null?lbl(h):TK===''?'дата не подтверждена':sel>TK?'ещё впереди':'не записано')}
+function render(){document.getElementById('app').innerHTML=build();status()}
+document.getElementById('app').onclick=e=>{const b=e.target.closest('.d');if(!b||b.classList.contains('f'))return;sel=b.dataset.k;render()};
+document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{if(sel>TK)return status('Нельзя записать:');data[sel]=+b.dataset.h;save();render();status('Записано:')});
+document.getElementById('del').onclick=()=>{if(sel>TK)return;delete data[sel];save();render();status('Стёрто:')};
+document.getElementById('reset').onclick=()=>{if(confirm('Удалить все записи?')){data={};save();render()}};
+const SRC=[async()=>{const r=await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC',{cache:'no-store',signal:AbortSignal.timeout(6000)});return new Date((await r.json()).unixtime*1000)},
+async()=>{const r=await fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC',{cache:'no-store',signal:AbortSignal.timeout(6000)});return new Date((await r.json()).dateTime.slice(0,19)+'Z')}];
+async function verify(){net='load';status();for(const f of SRC){try{const d=await f();if(isNaN(d))continue;TK=fmt(d);net='ok';break}catch(e){}}
+ if(net==='ok')sel=TK<SK?SK:TK>EK?EK:TK;else{net='fail';TK=''}
+ render();if(net==='ok'&&TK>SK){const x=document.querySelector('.d.sel');if(x)x.scrollIntoView({block:'center'})}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)verify()});window.addEventListener('online',verify);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+document.getElementById('exp').onclick=async()=>{const t=JSON.stringify(data);try{await navigator.clipboard.writeText(t);alert('Копия скопирована. Сохраните её в заметках.')}catch(e){prompt('Скопируйте копию:',t)}};
+document.getElementById('imp').onclick=()=>{const t=prompt('Вставьте копию данных:');if(!t)return;try{const o=JSON.parse(t);Object.assign(data,o);save();render();alert('Данные восстановлены')}catch(e){alert('Не удалось прочитать копию')}};
+render();verify();
+</script>
+</body>
+</html>
